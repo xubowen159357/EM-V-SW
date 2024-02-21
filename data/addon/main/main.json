@@ -1,0 +1,9 @@
+{
+    "type":"main",
+    "file":{
+        "forder":["lang","font"],
+        "font":["INKFREE.TTF"],
+        "lang":["en_USA","en_LAND"]},
+    "lang":{"en":["USA"],"zh":["LAND"]},
+    "uuid":"00000000-0000-0000-0000-000000000001"
+}
