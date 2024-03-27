@@ -14,5 +14,7 @@ Error.8w52764y-59gz-jp5s-fd8v-zsywak9rh16w=The json(configuration file) is inval
 Error.epk6fbgw-amsg-we5o-05pz-jybp2bnwm2yl=The selected character/enemy does not exist! Please restore the configuration file immediately!
 Setting.set=apply
 Setting.applynow=Load configuration
+Setting.downloadaddon=Download addon
 Setting.apply=Do you want to load the configuration file now?
+Downloadaddon.download=Download this addon
 Lang.type=en

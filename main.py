@@ -1,10 +1,14 @@
 from data.code.pygamelocals import pygamelocals as pg
 from data.code.jsonPy import jsonPy as jsonpy
 from data.code.uuidPy import uuidPy as uuidpy
-import random
+from typing import Tuple, Union
+import threading
+import zipfile
 import laoders
+import random
 import time
 import math
+import wget
 import os
 
 
@@ -17,7 +21,7 @@ REBOOL = 10
 ICON = 'data/setting/icon.ico'
 ERROR = None
 THREADS = {}
-
+CAT=''
 
 root = pg.windowAPI.Tk()
 root.title(LAODER.LANG['Text.smellcaptain'])
@@ -42,10 +46,10 @@ for i in range(2, 7):
 
 if LAODER.SETTING.dict['$version']['type'] == 'alpha' or LAODER.SETTING.dict['$version']['type'] == 'bate':
     if LAODER.LANG['Lang.type'] != 'zh':
-        if not pg.windowAPI.mess.askretrycancel(f'Version {LAODER.SETTING.dict['$version']['type']}', f'You are currently using version {LAODER.SETTING.dict['$version']['type']}, this version usually has a lot of bugs, if you encounter, please do not tell me, because I am busy. Thank you for your cooperation!'):
+        if not pg.windowAPI.mess.askretrycancel(f"Version {LAODER.SETTING.dict['$version']['type']}', f'You are currently using version {LAODER.SETTING.dict['$version']['type']}, this version usually has a lot of bugs, if you encounter, please do not tell me, because I am busy. Thank you for your cooperation!"):
             quit()
     else:
-        if not pg.windowAPI.mess.askretrycancel(LAODER.SETTING.dict['$version']['type']+' 版本', f'你现在设用的是 {LAODER.SETTING.dict['$version']['type']} 版本, 此版本通常有很多Bug, 如果你遇到了, 请不要告诉我, 因为我很忙。谢谢合作！'):
+        if not pg.windowAPI.mess.askretrycancel(LAODER.SETTING.dict['$version']['type']+' 版本', f'你现在使用的是 {LAODER.SETTING.dict["$version"]["type"]} 版本, 此版本通常有很多Bug, 如果你遇到了, 请不要告诉我, 因为我很忙。谢谢合作！'):
             quit()
 
 
@@ -87,7 +91,7 @@ class API_8w52764y:
         self.root.blit(sur, rect)
         return size
 
-    def showtext(self, text: str, size: int, color: tuple = (0, 0, 0), font: str = None, bgcolor: tuple | None = None, antialias: int = 0, culertext=0):
+    def showtext(self, text: str, size: int, color: tuple = (0, 0, 0), font: str = None, bgcolor: Union[tuple, None] = None, antialias: int = 0, culertext=0):
         if culertext:
             if LAODER.LANG['Lang.type'] == 'zh':
                 if font == None:
@@ -114,7 +118,48 @@ class API_8w52764y:
 window = API_8w52764y()
 
 
+class upaddon:
+    def __init__(self) -> None:
+        self.uuidpak=f'{uuidpy.rand(0)}.zip'
+        tar=threading.Thread(target=self.downjson)
+        tar.run()
+        zip=zipfile.ZipFile(f'data/download/{self.uuidpak}')
+        zip.extractall('data/temp')
+        self.dict=jsonpy.FrIn(jsonpy.load('data/temp/EM-V-SW-addon-main/addons.json')).dict
+        self.keys=self.dict['keys']
+        self.version=self.dict['version']
+    def downpack(self,url,name):
+        def down():wget.download(url,f'data/download/{name}.zip')
+        tar=threading.Thread(target=down)
+        tar.run()
+        return f'data/download/{name}.zip'
+    def update(self,path):
+        zip=zipfile.ZipFile(path)
+        zip.extractall('data/addon/')
+    def addaddons(self,url,name):
+        self.update(self.downpack(url,name))
+    def downjson(self) -> None:
+        wget.download('https://github.com/xubowen159357/EM-V-SW-addon/archive/refs/heads/main.zip',f'data/download/{self.uuidpak}')
 def changesetting():
+    def downad():
+        def choose():
+            index = listad.curselection()
+            for i in index:
+                index=listad.get(i)
+            for i in range(len(a.keys)):
+                if index==a.dict[a.keys[i]]['name']:
+                    a.addaddons(a.dict[a.keys[i]]['dress'],a.keys[i])
+        a=upaddon()
+        top2 = pg.windowAPI.Toplevel()
+        top2.iconbitmap(ICON)
+        top2.geometry('600x500')
+        top2.title(LAODER.LANG['Setting.downloadaddon'])
+        listad=pg.windowAPI.Listbox(top2,width=30,height=20)
+        for i in range(len(a.keys)):
+            listad.insert(str(i+1),a.dict[a.keys[i]]['name'])
+        listad.pack()
+        down=pg.windowAPI.Button(top2,text=LAODER.LANG['Downloadaddon.download'],command=choose)
+        down.pack()
     def setbutc():
         global LAODER
         a = edit.get('1.0', 'end-1c')
@@ -152,6 +197,8 @@ def changesetting():
     edit.pack()
     setbut = pg.windowAPI.Button(top, text=LAODER.LANG['Setting.set'], command=setbutc)
     setbut.pack()
+    downaddon=pg.windowAPI.Button(top, text=LAODER.LANG['Setting.downloadaddon'], command=downad)
+    downaddon.pack()
 
 
 class transform:
@@ -160,10 +207,13 @@ class transform:
 
 
 surfacelook = window.showtext('Text.captain', 45, font=LAODER.FONT[1])
-if LAODER.LANG['Lang.type'] == 'zh':
+if LAODER.LANG['Lang.type'] == 'zh' and LAODER.SETTING.dict["show-ture-engineer"]:
+    surfacelook2 = window.showtext('xu.bw', 25, culertext=1, font=LAODER.FONT[1])
+    surfacelook = window.showtext('Text.captain', 45)
+if LAODER.LANG['Lang.type'] == 'zh' and not LAODER.SETTING.dict["show-ture-engineer"]:
     surfacelook2 = window.showtext('Text.engineer', 25)
     surfacelook = window.showtext('Text.captain', 45)
-elif LAODER.SETTING.dict.get("show-ture-engineer"):
+elif LAODER.SETTING.dict["show-ture-engineer"]:
     surfacelook2 = window.showtext('xu.bw', 25, culertext=1, font=LAODER.FONT[1])
 else:
     # surfacelook=transform.scale(surfacelook,(WID,HEI))
@@ -178,7 +228,6 @@ mouse = pg.load(temp.Path+'/'+temp.file['mouse']).convert_alpha()
 pg.color.Color
 pg.surface.Surface.set_palette
 pg.Rect.width
-
 
 class boss:
     def __init__(chess, *args) -> None:
@@ -197,16 +246,17 @@ playerG = player()
 
 
 class bossself(pg.sprite.Sprite):
-    def __init__(self, imgcik, pak=LAODER.images.images['BJ0SXVEY-4Q00-871E-P0LA-VGQPTGEBS4DH'], *groups) -> None:
+    def __init__(self, imgcik, *groups) -> None:
         try:
             pg.sprite.Sprite.__init__(self)
-            self.png = pak.bossimage[imgcik][0]
+            self.png = LAODER.addon.bossimage[imgcik][0]
             self.bool = 200
             self.sur = pg.load(self.png).convert_alpha()
             self.sur = {'sur': self.sur, 'bool': window.showtext(
                 LAODER.LANG['Play.bool']+':'+str(self.bool), 15, culertext=1)}
             self.rect = self.sur['sur'].get_rect()
-            self.rect.w, self.rect.h = window.blit(self.sur['sur'], self.rect, (80*0.648, 80))
+            self.size=(80*(self.rect.w/self.rect.h), 80)
+            self.rect.w, self.rect.h = window.blit(self.sur['sur'], self.rect, self.size)
             self.gorect = [0, self.rect.height]
             self.alpha = 255
             self.level = 1
@@ -216,8 +266,9 @@ class bossself(pg.sprite.Sprite):
         except:
             global ERROR
             global RUN
+            global CAT
+            CAT=self
             ERROR = 'Error.epk6fbgw-amsg-we5o-05pz-jybp2bnwm2yl'
-            print(3)
             RUN = False
 
     def levelchange(self):
@@ -262,17 +313,17 @@ class bossself(pg.sprite.Sprite):
         self.sur['sur'].set_alpha(self.alpha)
         self.sur['bool'] = window.showtext(LAODER.LANG['Play.bool']+':'+str(self.bool), 15, culertext=1)
         self.sur['leve'] = window.showtext(LAODER.LANG['Play.leve']+':'+str(self.level), 15, culertext=1)
-        self.rect.w, self.rect.h = window.blit(self.sur['sur'], self.rect, (80*0.648, 80))
+        self.rect.w, self.rect.h = window.blit(self.sur['sur'], self.rect, self.size)
         window.blit(self.sur['bool'], [0, 0], textrcet=self.sur['bool'].get_rect())
         window.blit(self.sur['leve'], [0, 15], textrcet=self.sur['bool'].get_rect(), movetext=[0, -15])
         self.levelchange()
 
 
 class playerself(pg.sprite.Sprite):
-    def __init__(self, imgcik, pak=LAODER.images.images['G12WQ9GV-X0Z0-HFX3-3Y9O-LQ0TCEZCPFWR'], *groups) -> None:
+    def __init__(self, imgcik, *groups) -> None:
         try:
             pg.sprite.Sprite.__init__(self)
-            self.png = pak.playerimage[imgcik]
+            self.png = LAODER.addon.playerimage[imgcik][0]
             self.bool = 200
             self.sur = pg.load(self.png)
             self.sur = self.sur
@@ -283,8 +334,9 @@ class playerself(pg.sprite.Sprite):
         except:
             global ERROR
             global RUN
+            global CAT
+            CAT=self
             ERROR = 'Error.epk6fbgw-amsg-we5o-05pz-jybp2bnwm2yl'
-            print(2)
             RUN = False
 
     def update(self, *args, **kwargs) -> None:
@@ -298,13 +350,13 @@ class playerself(pg.sprite.Sprite):
 
 
 class playerbutton(pg.sprite.Sprite):
-    def __init__(self, imgcik, pak=LAODER.images.images['G12WQ9GV-X0Z0-HFX3-3Y9O-LQ0TCEZCPFWR'], *groups) -> None:
+    def __init__(self, imgcik, *groups) -> None:
         try:
             pg.sprite.Sprite.__init__(self)
             sunds = pg.mixer.Sound('data/sounds/'+LAODER.SOUNDS['button.outgun'])
             sunds.set_volume(0.5)
             THREADS[f'thread{random.randint(2, 6)}'].play(sunds)
-            self.png = pak.playerimage[imgcik]
+            self.png = LAODER.addon.playerimage[imgcik][1]
             self.bool = 200
             self.sur = pg.load(self.png)
             self.sur = self.sur
@@ -313,8 +365,9 @@ class playerbutton(pg.sprite.Sprite):
             self.rect.x, self.rect.y = playerG.player.sprites(
             )[0].rect.centerx, playerG.player.sprites()[0].rect.centery
             self.alpha = 255
-            self.speed = 10
+            self.speed = 10*60/FPS
             self.angle = 90
+            self.size=[40, 40]
             if Schach:
                 dx = self.rect.centerx - bossG.boss.rect.centerx
                 dy = self.rect.centery - bossG.boss.rect.centery
@@ -327,8 +380,9 @@ class playerbutton(pg.sprite.Sprite):
         except BaseException as e:
             global ERROR
             global RUN
+            global CAT
+            CAT=self
             ERROR = 'Error.epk6fbgw-amsg-we5o-05pz-jybp2bnwm2yl'
-            print(e)
             RUN = False
 
     def update(self, *args, **kwargs) -> None:
@@ -339,7 +393,7 @@ class playerbutton(pg.sprite.Sprite):
         self.rect.x += self.gox
         self.rect.y += -abs(self.goy)
         self.sur.set_alpha(self.alpha)
-        self.rect.w, self.rect.h = window.blit(self.sur, self.rect, (20, 20))
+        self.rect.w, self.rect.h = window.blit(self.sur, self.rect, self.size)
 
 
 mainloop = {'setting-button': {'sur': settingbutton, "rect": settingbutton.get_rect(), "tick": True,
@@ -391,7 +445,7 @@ def cpu_loop(mouse_pos, keyboard):
 #        if mainloop[i].get('tick') and mainloop[i]['rect'].collidepoint(mouse_pos):
 #            mainloop[i]['sur']=pg.transform.rotate(mainloop[i]['sur'], 10)
 
-def tick(mouse_pos: tuple[int, int]):
+def tick(mouse_pos):
     global loop
     if loop == 'main':
         if pg.draw.rect(ROOT, (225, 255, 225), [WID/2-100, HEI/2, 200, 30], 1).collidepoint(mouse_pos):
@@ -478,4 +532,5 @@ while RUN:
 # get for key value
     updata()
 if ERROR != None:
-    pg.windowAPI.mess.showwarning(LAODER.LANG['Error'], LAODER.LANG[ERROR])
+    pg.windowAPI.mess.showwarning(LAODER.LANG['Error'], f'{LAODER.LANG[ERROR]},report at {CAT}')
+os.system(f'del /Q data\\download\\*')

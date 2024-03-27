@@ -1,7 +1,7 @@
 {
     "$Lang":["zh","LAND"],
-    "$version":{"type":"alpha","version":[0,0,1]},
-    "show-ture-engineer":1,
-    "image":{"boss":"jzg","player":"wheel"},
+    "$version":{"type":"alpha","version":[0,2,3,25]},
+    "show-ture-engineer":0,
+    "image":{"boss":"TJ","player":"wheel"},
     "FPS_MAX":60
 }
