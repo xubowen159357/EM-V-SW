@@ -6,6 +6,7 @@ import threading
 import zipfile
 import laoders
 import random
+import traceback as trace
 import time
 import math
 import wget
@@ -20,8 +21,8 @@ FPS = LAODER.SETTING.dict['FPS_MAX']
 REBOOL = 10
 ICON = 'data/setting/icon.ico'
 ERROR = None
-THREADS = {}
 CAT=''
+ROOT = pg.display.set_mode([WID, HEI])
 
 root = pg.windowAPI.Tk()
 root.title(LAODER.LANG['Text.smellcaptain'])
@@ -29,7 +30,6 @@ root.wm_withdraw()
 FULLSUCSSE = {'full': 0, 'max_size': root.wm_maxsize(), 'size': [WID, HEI]}
 FULLSUCSSE['pos']=int((FULLSUCSSE['max_size'][0]+FULLSUCSSE['max_size'][1])/(WID+HEI))
 pg.init()
-ROOT = pg.display.set_mode([WID, HEI])
 pg.display.set_caption(LAODER.LANG['Text.captain'])
 pg.display.set_icon(pg.load(ICON))
 pg.mouse.set_visible(False)
@@ -38,10 +38,6 @@ time_killer = {'tick': 0, 'time': 0, 'clock1': 0}
 # imang
 temp = LAODER.images.images['7PHKQHQ0-CB90-QYL0-343S-3RRJYKDS1J1Q']
 Schach = 0
-
-
-for i in range(2, 7):
-    THREADS['thread'+str(i)] = pg.mixer.Channel(i)
 
 
 if LAODER.SETTING.dict['$version']['type'] == 'alpha' or LAODER.SETTING.dict['$version']['type'] == 'bate':
@@ -128,6 +124,12 @@ class upaddon:
         self.dict=jsonpy.FrIn(jsonpy.load('data/temp/EM-V-SW-addon-main/addons.json')).dict
         self.keys=self.dict['keys']
         self.version=self.dict['version']
+        for i in range(len(self.version)):
+            if self.version[i]!=LAODER.SETTING.dict['$version']['version'][i]:
+                pg.windowAPI.mess.showwarning('错误',\
+'警告版本不同，当前：%s.%s.%s.%s，最新：%s.%s.%s.%s\n不提供支援！'%(LAODER.SETTING.dict['$version']['version'][0],LAODER.SETTING.dict['$version']['version'][1],LAODER.SETTING.dict['$version']['version'][2],LAODER.SETTING.dict['$version']['version'][3],\
+self.version[0],self.version[1],self.version[2],self.version[3]))
+                break
     def downpack(self,url,name):
         def down():wget.download(url,f'data/download/{name}.zip')
         tar=threading.Thread(target=down)
@@ -181,13 +183,13 @@ def changesetting():
                     langfile = i
             if langfile == None:
                 raise FileNotFoundError
+            open('data/setting/setting.json', 'w', encoding='utf-8').write(a)
+            if pg.windowAPI.mess.askyesno(LAODER.LANG['Setting.applynow'], LAODER.LANG['Setting.apply']):
+                LAODER = laoders.MAIN()
+                pg.display.set_caption(LAODER.LANG['Text.captain'])
         except BaseException as er:
             pg.windowAPI.mess.showerror(
                 LAODER.LANG['Error'], LAODER.LANG['Error.8w52764y-59gz-jp5s-fd8v-zsywak9rh16w']+f'\n At:{er}')
-        open('data/setting/setting.json', 'w', encoding='utf-8').write(a)
-        if pg.windowAPI.mess.askyesno(LAODER.LANG['Setting.applynow'], LAODER.LANG['Setting.apply']):
-            LAODER = laoders.MAIN()
-            pg.display.set_caption(LAODER.LANG['Text.captain'])
     top = pg.windowAPI.Toplevel()
     top.iconbitmap(ICON)
     top.geometry('600x500')
@@ -249,7 +251,7 @@ class bossself(pg.sprite.Sprite):
     def __init__(self, imgcik, *groups) -> None:
         try:
             pg.sprite.Sprite.__init__(self)
-            self.png = LAODER.addon.bossimage[imgcik][0]
+            self.png = LAODER.addon.bossimage[imgcik].bossimage[0]
             self.bool = 200
             self.sur = pg.load(self.png).convert_alpha()
             self.sur = {'sur': self.sur, 'bool': window.showtext(
@@ -263,11 +265,11 @@ class bossself(pg.sprite.Sprite):
             self.timekey = 0
             self.levelchangev = 0
             self.speed = 1
-        except:
+        except BaseException as e:
             global ERROR
             global RUN
             global CAT
-            CAT=self
+            CAT=str(self)+'\n'+str(e)+'\n'+trace.format_exc()
             ERROR = 'Error.epk6fbgw-amsg-we5o-05pz-jybp2bnwm2yl'
             RUN = False
 
@@ -319,11 +321,38 @@ class bossself(pg.sprite.Sprite):
         self.levelchange()
 
 
+class bossbutton(pg.sprite.Sprite):
+    def __init__(self, imgcik, thought, *groups) -> None:
+        try:
+            pg.sprite.Sprite.__init__(self)
+            self.png = LAODER.addon.bossimage[imgcik].bossimage[1]
+            self.bool = 200
+            self.sur = pg.load(self.png).convert_alpha()
+            self.sur = {'sur': self.sur, 'bool': window.showtext(
+                LAODER.LANG['Play.bool']+':'+str(self.bool), 15, culertext=1)}
+            self.rect = self.sur['sur'].get_rect()
+            self.size=(80*(self.rect.w/self.rect.h), 80)
+            self.rect.w, self.rect.h = window.blit(self.sur['sur'], self.rect, self.size)
+            self.speed = 5
+            self.gox = math.cos(math.radians(self.angle)) * self.speed
+            self.goy = -math.sin(math.radians(self.angle)) * self.speed
+        except BaseException as e:
+            global ERROR
+            global RUN
+            global CAT
+            CAT=str(self)+'\n'+str(e)+'\n'+trace.format_exc()
+            ERROR = 'Error.epk6fbgw-amsg-we5o-05pz-jybp2bnwm2yl'
+            RUN = False
+
+
+    def update(self, tick=0, *args, **kwargs) -> None:pass
+
+
 class playerself(pg.sprite.Sprite):
     def __init__(self, imgcik, *groups) -> None:
         try:
             pg.sprite.Sprite.__init__(self)
-            self.png = LAODER.addon.playerimage[imgcik][0]
+            self.png = LAODER.addon.playerimage[imgcik].playerimage[0]
             self.bool = 200
             self.sur = pg.load(self.png)
             self.sur = self.sur
@@ -331,11 +360,11 @@ class playerself(pg.sprite.Sprite):
             self.rect.w, self.rect.h = window.blit(self.sur, self.rect, (70, 70))
             self.alpha = 255
             self.size = (70, 70)
-        except:
+        except BaseException as e:
             global ERROR
             global RUN
             global CAT
-            CAT=self
+            CAT=str(self)+'\n'+str(e)+'\n'+trace.format_exc()
             ERROR = 'Error.epk6fbgw-amsg-we5o-05pz-jybp2bnwm2yl'
             RUN = False
 
@@ -353,10 +382,7 @@ class playerbutton(pg.sprite.Sprite):
     def __init__(self, imgcik, *groups) -> None:
         try:
             pg.sprite.Sprite.__init__(self)
-            sunds = pg.mixer.Sound('data/sounds/'+LAODER.SOUNDS['button.outgun'])
-            sunds.set_volume(0.5)
-            THREADS[f'thread{random.randint(2, 6)}'].play(sunds)
-            self.png = LAODER.addon.playerimage[imgcik][1]
+            self.png = LAODER.addon.playerimage[imgcik].playerimage[1]
             self.bool = 200
             self.sur = pg.load(self.png)
             self.sur = self.sur
@@ -377,11 +403,16 @@ class playerbutton(pg.sprite.Sprite):
             else:
                 self.gox = 0
                 self.goy = 10
+            if LAODER.SETTING.dict['$Sound']['init']:
+                sounds = pg.mixer.Sound('data/sounds/'+LAODER.SOUNDS['button.outgun'])
+                sounds.set_volume(int(LAODER.SETTING.dict['$Sound']['volume'])/100)
+                LAODER.THREADS[f'thread{random.randint(2, 3)}'].play(sounds)
         except BaseException as e:
             global ERROR
             global RUN
             global CAT
-            CAT=self
+            trace.print_exc()
+            CAT=str(self)+'\n'+str(e)+'\n'+trace.format_exc()
             ERROR = 'Error.epk6fbgw-amsg-we5o-05pz-jybp2bnwm2yl'
             RUN = False
 

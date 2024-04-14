@@ -25,5 +25,5 @@ class uuidkey:
         try:return self.value[string]
         except:return Null('No found.')
     
-    def allitem(self)->list[list]:
+    def allitem(self):
         return list(self.value.items())

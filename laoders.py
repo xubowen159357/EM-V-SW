@@ -8,6 +8,26 @@ import os
 
 class MAIN:
     def __init__(self) -> None:
+        self.init()
+        self.chcek()
+        self.loadself()
+        self.THREADS = {}
+        if self.SETTING.dict.get('$Sound')['init']:
+            pg.mixer.init()
+            for i in range(2, 7):
+                self.THREADS['thread'+str(i)] = pg.mixer.Channel(i)
+        else:self.THREADS='disabled'
+
+    def chcek(self) -> None:
+        listofad=os.listdir('data/addon')
+        del listofad[listofad.index('addon.json')]
+        if len(listofad)!=len(self.ADDONLIST.dict.keys()):
+            for i in listofad:
+                self.ADDONLIST.dict[i]=1
+        open('data/addon/addon.json','w',encoding='utf-8').write(jsonpy.To(self.ADDONLIST.dict).json)
+        self.init()
+
+    def init(self) -> None:
         self.ADDONLIST=jsonpy.FrIn(jsonpy.load('data/addon/addon.json'))
         self.IMAGELIST=os.listdir('data/image')
         self.FONT=['data/addon/main/font/JETBRAINSMONO-LIGHT.TTF','data/addon/main/font/INKFREE.TTF','data/addon/main/font/SIMKAI.TTF']
@@ -16,7 +36,6 @@ class MAIN:
         self.SOUNDS={}
         self.images=load.images.images()
         self.addon=load.addons.addons()
-        self.loadself()
 
     def loadself(self) -> None:
         print(pg.colormode("Python version:\n",pg.gb),pg.colormode(sys.version,pg.r))
