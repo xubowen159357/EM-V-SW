@@ -10,6 +10,7 @@ class Input:
     def __init__(self, file_path, code='utf-8') -> None:
         self.file=open(file_path,'r',encoding=code)
         self.value=self.file.read()
+        self.file.close()
 
 class Output:
     def __init__(self,value) -> None: 

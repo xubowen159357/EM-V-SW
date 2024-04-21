@@ -39,8 +39,17 @@ class MAIN:
 
     def loadself(self) -> None:
         print(pg.colormode("Python version:\n",pg.gb),pg.colormode(sys.version,pg.r))
-        for i in tqdm(list(self.ADDONLIST.dict.keys())):
-            if self.ADDONLIST.dict[i]:self.addon.add(load.addons.Load(i, jsonpy))
+        try:
+            for i in tqdm(list(self.ADDONLIST.dict.keys())):
+                if self.ADDONLIST.dict[i]:self.addon.add(load.addons.Load(i, jsonpy))
+        except:
+            a=open('data/addon/addon.json','w',encoding='utf-8')
+            a.write('{}')
+            a.close()
+            self.init()
+            self.chcek()
+            for i in tqdm(list(self.ADDONLIST.dict.keys())):
+                if self.ADDONLIST.dict[i]:self.addon.add(load.addons.Load(i, jsonpy))
         for i in tqdm(self.IMAGELIST):
             self.images.add(load.images.Load(i, jsonpy))
         #setting Load
@@ -68,3 +77,5 @@ class MAIN:
             i=i.strip()
             k=i.split('=')
             self.SOUNDS[k[0]]=k[1]
+
+MAIN()

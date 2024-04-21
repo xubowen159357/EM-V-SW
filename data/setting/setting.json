@@ -1,8 +1,9 @@
 {
     "$Lang":["zh","LAND"],
-    "$version":{"type":"alpha","version":[0,2,3,25]},
+    "$version":{"type":"formal","version":[1,0,0,0]},
+    "$play":{"boss":"DY","player":"wheel"},
     "$Sound":{"volume":25,"init":1},
     "show-ture-engineer":0,
-    "image":{"boss":"JZG","player":"wheel"},
+    "Function buttons":1,
     "FPS_MAX":60
 }
