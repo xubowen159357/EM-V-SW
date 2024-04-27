@@ -17,8 +17,8 @@ import threading
 Clock=pygame.time.Clock()
 
 class Time:
-    def __init__(self,Update_speed) -> None:
-        self.cick=60/(Update_speed+2)
+    def __init__(self,Update_speed:int) -> None:
+        self.cick=60/(Update_speed)
         self.tick=0
         self.s=0
         self.thread={}
@@ -32,7 +32,7 @@ class Time:
             time.sleep(self.cick/100)
     def addThread(self,name:str,cycle:int)->threading.Thread:
         self.thread[name]=self.ThreadTime(self.cick,cycle)
-    def ThreadTime(self,cick,cycle):
+    def ThreadTime(self,cick:int,cycle:int=0):
         class TT:
             def __init__(Tt) -> None:
                 Tt.time=0
@@ -46,7 +46,8 @@ class Time:
                 while True:
                     Tt.tick+=1
                     if Tt.tick>=60:Tt.time+=1;Tt.tick=0
-                    if Tt.time>Tt.cycle:Tt.time=0
+                    if Tt.cycle:
+                        if Tt.time>Tt.cycle:Tt.time=0
                     time.sleep(Tt.cick/100)
         return TT()
 

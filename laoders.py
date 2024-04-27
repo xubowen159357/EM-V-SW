@@ -2,6 +2,7 @@ from data.code.pygamelocals import pygamelocals as pg
 from data.code.jsonPy import jsonPy as jsonpy
 from data.code.Loadcode import Loadcode as load
 from tqdm.rich import tqdm,trange
+import os.path
 import time
 import sys
 import os
@@ -78,4 +79,14 @@ class MAIN:
             k=i.split('=')
             self.SOUNDS[k[0]]=k[1]
 
-MAIN()
+class USER:
+    def __init__(self,ACCESS:MAIN) -> None:
+        self.username=ACCESS.SETTING.dict.get('User')
+        if not os.path.exists(f'data/setting/user/{self.username}.access.data'):
+            if pg.windowAPI.mess.askyesno('ADD USER','Do you want to add user?'):open(f'data/setting/user/{self.username}.access.data','w',encoding='utf-8').write(r'{"maxscore":0,"developers":0}')
+            else:os.startfile('data/setting/setting.json');pg.windowAPI.mess.showinfo('CONT ADD NEW USER','Please try others user.');sys.exit()
+        self.user=jsonpy.FrIn(jsonpy.load(f'data/setting/user/{self.username}.access.data'))
+        self.maxscore=self.user.dict.get('maxscore')
+    def save(self):
+        self.user.dict['maxscore']=self.maxscore
+        open(f'data/setting/user/{self.user.dict.get("User")}.access.data','w',encoding='utf-8').write(jsonpy.To(self.user.dict).json)

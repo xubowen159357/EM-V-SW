@@ -1,3 +1,5 @@
+import os
+os.system('chcp 65001')
 from data.code.pygamelocals import pygamelocals as pg
 from data.code.jsonPy import jsonPy as jsonpy
 from data.code.uuidPy import uuidPy as uuidpy
@@ -10,23 +12,34 @@ import traceback as trace
 import time
 import math
 import wget
-import os
-
 
 LAODER = laoders.MAIN()
 RUN = 1
 WID, HEI = 192*5, 108*5
 UUID = uuidpy.uuidkey()
 FPS = LAODER.SETTING.dict['FPS_MAX']
-REBOOL = 10
+REblood = 10
 ICON = 'data/setting/icon.ico'
 ERROR = None
 CAT=''
 ROOT = pg.display.set_mode([WID, HEI])
+TIME=pg.Time(FPS)
+IOREDER=pg.CLASSIOREDER()
+if LAODER.SETTING.dict['Function buttons']==1:
+    F11=pg.K_F11
+    F1=pg.K_F1
+elif LAODER.SETTING.dict['Function buttons']==2:
+    F11=pg.K_i
+    F1=pg.K_1
+else:
+    F11=pg.K_i
+    F1=pg.K_q
 
 root = pg.windowAPI.Tk()
 root.title(LAODER.LANG['Text.smellcaptain'])
+root.iconbitmap(ICON)
 root.wm_withdraw()
+USER = laoders.USER(LAODER)
 FULLSUCSSE = {'full': 0, 'max_size': root.wm_maxsize(), 'size': [WID, HEI]}
 FULLSUCSSE['pos']=int((FULLSUCSSE['max_size'][0]+FULLSUCSSE['max_size'][1])/(WID+HEI))
 pg.init()
@@ -60,14 +73,21 @@ class API_8w52764y:
     def __init__(self) -> None:
         self.root = ROOT
 
-    def blit(self, sur: pg.surface, rect: pg.rect.Rect, size: tuple = None, textrcet: pg.rect.Rect = False, movetext: list = None):
+    def blit(self, sur: pg.surface, rect: pg.rect.Rect=None, size: tuple = None, textrcet: pg.rect.Rect = False, movetext: list = None, dontscale:bool=False):
+        if dontscale:
+            if size != None:
+                sur = pg.transform.scale(sur, size)
+            self.root.blit(sur, rect)
+            return size
         if size != None and FULLSUCSSE['full'] and textrcet == False:
             size = [size[0]*FULLSUCSSE['pos'], size[1]*FULLSUCSSE['pos']]
             sur = pg.transform.scale(sur, size)
         elif size != None and textrcet == False:
             size = [size[0], size[1]]
             sur = pg.transform.scale(sur, size)
-        elif textrcet != False:
+        elif textrcet:
+            if rect==None:
+                rect=textrcet
             if FULLSUCSSE['full']:
                 sur = pg.transform.scale(sur, (textrcet.w*FULLSUCSSE['pos'], textrcet.h*FULLSUCSSE['pos']))
                 if movetext != None and type(movetext) != list:
@@ -84,11 +104,34 @@ class API_8w52764y:
                     else:
                         rect.x -= movetext[0]
                         rect.y -= movetext[1]
+                if type(rect) == list or type(rect) == tuple:
+                    if rect[0] < 0:
+                        rect[0] = 0
+                    elif rect[0] > FULLSUCSSE['max_size'][0]:
+                        rect[0] = FULLSUCSSE['max_size'][0]
+                    if rect[1] < 0:
+                        rect[1] = 0
+                    elif rect[1] > FULLSUCSSE['max_size'][1]:
+                        rect[1] = FULLSUCSSE['max_size'][1]
+                else:
+                    if rect.x < 0:
+                        rect.x = 0
+                    elif rect.x > FULLSUCSSE['max_size'][0]:
+                        rect.x = FULLSUCSSE['max_size'][0]
+                    if rect.y < 0:
+                        rect.y = 0
+                    elif rect.y > FULLSUCSSE['max_size'][1]:
+                        rect.y = FULLSUCSSE['max_size'][1]
+        elif FULLSUCSSE['full']:
+            size = [sur.get_rect().w*FULLSUCSSE['pos'], sur.get_rect().h*FULLSUCSSE['pos']]
+            sur = pg.transform.scale(sur, size)
         self.root.blit(sur, rect)
         return size
 
-    def showtext(self, text: str, size: int, color: tuple = (0, 0, 0), font: str = None, bgcolor: Union[tuple, None] = None, antialias: int = 0, culertext=0):
+    def showtext(self, text: str, size: int, color: tuple = (0, 0, 0), font: str = None, bgcolor: Union[tuple, None] = None, antialias: int = 0, culertext=0, replace=False, remove=False):
         if culertext:
+            if replace :
+                text=self.reset(text,replace,remove)
             if LAODER.LANG['Lang.type'] == 'zh':
                 if font == None:
                     font = LAODER.FONT[2]
@@ -98,17 +141,28 @@ class API_8w52764y:
                     font = LAODER.FONT[0]
                 return pg.font.Font(font, size).render(text, antialias, color, bgcolor)
         else:
-            enl = ['Text.smellcaptain']
+            texts=LAODER.LANG[text]
+            enl = [LAODER.LANG['Text.smellcaptain']]
+            if replace :
+                texts=self.reset(texts,replace,remove)
             if LAODER.LANG['Lang.type'] == 'zh' and not text in enl:
                 if font == None:
                     font = LAODER.FONT[2]
-                return pg.font.Font(font, size).render(LAODER.LANG[text], antialias, color, bgcolor)
+                return pg.font.Font(font, size).render(texts, antialias, color, bgcolor)
             elif text in enl:
-                return pg.font.Font(LAODER.FONT[1], size).render(LAODER.LANG[text], antialias, color, bgcolor)
+                return pg.font.Font(LAODER.FONT[1], size).render(texts, antialias, color, bgcolor)
             else:
                 if font == None:
                     font = LAODER.FONT[0]
-                return pg.font.Font(font, size).render(LAODER.LANG[text], antialias, color, bgcolor)
+                return pg.font.Font(font, size).render(texts, antialias, color, bgcolor)
+            
+    def reset(self, strs:str, replace, remove):
+        if type(replace)==str or type(replace)==int:
+            return strs.replace(str(replace), str(remove))
+        else:
+            for i in range(len(replace)):
+                strs=strs.replace(str(replace[i]), str(remove[i]))
+            return strs
 
 
 window = API_8w52764y()
@@ -234,13 +288,13 @@ pg.Rect.width
 class boss:
     def __init__(chess, *args) -> None:
         chess.boss = None
-        chess.button = pg.sprite.Group()
+        chess.bullet = pg.sprite.Group()
 
 
 class player:
     def __init__(chess, *args) -> None:
         chess.player = pg.sprite.Group()
-        chess.button = pg.sprite.Group()
+        chess.bullet = pg.sprite.Group()
 
 
 bossG = boss()
@@ -251,11 +305,13 @@ class bossself(pg.sprite.Sprite):
     def __init__(self, imgcik, *groups) -> None:
         try:
             pg.sprite.Sprite.__init__(self)
+            IOREDER.add('score', 0)
+            self.imgcik = imgcik
             self.png = LAODER.addon.bossimage[imgcik].bossimage[0]
-            self.bool = 200
+            self.blood = 200
             self.sur = pg.load(self.png).convert_alpha()
-            self.sur = {'sur': self.sur, 'bool': window.showtext(
-                LAODER.LANG['Play.bool']+':'+str(self.bool), 15, culertext=1)}
+            self.sur = {'sur': self.sur, 'blood': window.showtext(
+                LAODER.LANG['Play.bossblood']+':'+str(self.blood), 15, culertext=1)}
             self.rect = self.sur['sur'].get_rect()
             self.size=(80*(self.rect.w/self.rect.h), 80)
             self.rect.w, self.rect.h = window.blit(self.sur['sur'], self.rect, self.size)
@@ -265,6 +321,8 @@ class bossself(pg.sprite.Sprite):
             self.timekey = 0
             self.levelchangev = 0
             self.speed = 1
+            self.bl=random.randint(3,5)
+            TIME.addThread('boss bullet',self.bl)
         except BaseException as e:
             global ERROR
             global RUN
@@ -274,6 +332,7 @@ class bossself(pg.sprite.Sprite):
             RUN = False
 
     def levelchange(self):
+        IOREDER.IO['score'] += int(100*self.levelchangev/(IOREDER.IO['player bullet used']/(10*self.levelchangev+1)+1))/10
         if self.levelchangev:
             if self.timekey == 0:
                 self.timekey = time_killer['time']
@@ -286,8 +345,8 @@ class bossself(pg.sprite.Sprite):
                 window.blit(text, [center[0]-text.get_rect().w/2, center[1]-text.get_rect().h/2])
 
     def update(self, tick=0, *args, **kwargs) -> None:
-        global REBOOL
-        bool = 0
+        global REblood
+        blood = 0
         if time_killer['tick'] == 0:
             self.gorect = [random.randint(self.rect.w, WID-self.rect.w), self.rect.height]
         if self.rect.x < self.gorect[0]:
@@ -295,47 +354,54 @@ class bossself(pg.sprite.Sprite):
         if self.rect.x > self.gorect[0]:
             self.rect.x -= self.speed
         if tick == 1:
-            bool = random.randint(REBOOL-10, int(REBOOL+10+REBOOL/10))
-        if bool == REBOOL+10+REBOOL/10:
-            self.bool -= int(REBOOL*(random.randint(150, 185)/100))
+            blood = random.randint(REblood-10, int(REblood+10+REblood/10))
+            IOREDER.IO['score']+=random.randint(1,10)
+        if blood == REblood+10+REblood/10:
+            self.blood -= int(REblood*(random.randint(150, 185)/100))
         else:
-            self.bool -= bool
-        if self.bool <= 0 and self.level < 3:
-            self.bool = int(200+200*(100+10*self.level)/100)
+            self.blood -= blood
+        if self.blood <= 0 and self.level < 3:
+            self.blood = int(200+200*(100+10*self.level)/100)
             self.level += 1
             self.levelchangev = 1
             self.speed += 2
-            REBOOL += int((100+10*self.level)/1000)
+            REblood += int((100+10*self.level)/1000)
             return None
-        elif self.bool <= 0:
-            self.bool = 0
+        elif self.blood <= 0:
+            self.blood = 0
             bossG.boss.boss = None
             global loop
-            loop = 'main'
+            loop = 'win'
+        if TIME.thread['boss bullet'].time == self.bl:
+            for i in range(5):
+                bossG.bullet.add(bossbullet(self.imgcik, (self.rect.x,self.rect.y), random.randint(-150, -30)))
+            self.bl=random.randint(3,5)
+            TIME.addThread('boss bullet',self.bl)
         self.sur['sur'].set_alpha(self.alpha)
-        self.sur['bool'] = window.showtext(LAODER.LANG['Play.bool']+':'+str(self.bool), 15, culertext=1)
+        self.sur['blood'] = window.showtext(LAODER.LANG['Play.bossblood']+':'+str(self.blood), 15, culertext=1)
         self.sur['leve'] = window.showtext(LAODER.LANG['Play.leve']+':'+str(self.level), 15, culertext=1)
         self.rect.w, self.rect.h = window.blit(self.sur['sur'], self.rect, self.size)
-        window.blit(self.sur['bool'], [0, 0], textrcet=self.sur['bool'].get_rect())
-        window.blit(self.sur['leve'], [0, 15], textrcet=self.sur['bool'].get_rect(), movetext=[0, -15])
+        window.blit(self.sur['blood'], [0, 0], textrcet=self.sur['blood'].get_rect())
+        window.blit(self.sur['leve'], [0, 15], textrcet=self.sur['blood'].get_rect(), movetext=[0, -15])
         self.levelchange()
 
 
-class bossbutton(pg.sprite.Sprite):
-    def __init__(self, imgcik, thought, *groups) -> None:
+class bossbullet(pg.sprite.Sprite):
+    def __init__(self, imgcik, swap_pos, thought=0, *groups) -> None:
         try:
             pg.sprite.Sprite.__init__(self)
             self.png = LAODER.addon.bossimage[imgcik].bossimage[1]
-            self.bool = 200
             self.sur = pg.load(self.png).convert_alpha()
-            self.sur = {'sur': self.sur, 'bool': window.showtext(
-                LAODER.LANG['Play.bool']+':'+str(self.bool), 15, culertext=1)}
-            self.rect = self.sur['sur'].get_rect()
-            self.size=(80*(self.rect.w/self.rect.h), 80)
-            self.rect.w, self.rect.h = window.blit(self.sur['sur'], self.rect, self.size)
+            self.rect = self.sur.get_rect()
+            self.size=(20*(self.rect.w/self.rect.h), 20)
+            self.rect.x = swap_pos[0]
+            self.rect.y = swap_pos[1]
+            self.rect.w, self.rect.h = window.blit(self.sur, self.rect, self.size)
             self.speed = 5
-            self.gox = math.cos(math.radians(self.angle)) * self.speed
-            self.goy = -math.sin(math.radians(self.angle)) * self.speed
+            self.gox = math.cos(math.radians(thought)) * self.speed
+            self.goy = -math.sin(math.radians(thought)) * self.speed
+            self.timecat=TIME.s
+            self.found=0
         except BaseException as e:
             global ERROR
             global RUN
@@ -345,21 +411,37 @@ class bossbutton(pg.sprite.Sprite):
             RUN = False
 
 
-    def update(self, tick=0, *args, **kwargs) -> None:pass
+    def update(self, *args, **kwargs) -> None:
+        if TIME.s-self.timecat<1:
+            self.rect.x += self.gox
+            self.rect.y += self.goy
+        elif self.found==0:
+            dx = self.rect.centerx - IOREDER.IO['player pos'][0]
+            dy = self.rect.centery - IOREDER.IO['player pos'][1]
+            self.angle = math.degrees(math.atan2(-dy, dx))+180
+            self.gox = math.cos(math.radians(self.angle)) * self.speed
+            self.goy = -math.sin(math.radians(self.angle)) * self.speed
+            self.found=1
+        else:
+            self.rect.x += self.gox
+            self.rect.y += self.goy
+        window.blit(self.sur, self.rect, self.size)
 
 
 class playerself(pg.sprite.Sprite):
     def __init__(self, imgcik, *groups) -> None:
         try:
             pg.sprite.Sprite.__init__(self)
+            IOREDER.add('player bullet used', 0)
             self.png = LAODER.addon.playerimage[imgcik].playerimage[0]
-            self.bool = 200
+            self.bloods = 100
             self.sur = pg.load(self.png)
             self.sur = self.sur
             self.rect = self.sur.get_rect()
             self.rect.w, self.rect.h = window.blit(self.sur, self.rect, (70, 70))
             self.alpha = 255
             self.size = (70, 70)
+            self.blood = window.showtext(LAODER.LANG['Play.playerblood']+':'+str(self.bloods), 15, culertext=1, replace='%play_name%', remove=LAODER.SETTING.dict['$play']['player'])
         except BaseException as e:
             global ERROR
             global RUN
@@ -368,22 +450,34 @@ class playerself(pg.sprite.Sprite):
             ERROR = 'Error.epk6fbgw-amsg-we5o-05pz-jybp2bnwm2yl'
             RUN = False
 
-    def update(self, *args, **kwargs) -> None:
+    def update(self, tick=0, *args, **kwargs) -> None:
+        global loop
         self.rect.y = HEI-self.rect.h
         if loop != 'play':
             playerG.player.empty()
         if pg.mouse.get_pos()[0] <= pg.display.get_window_size()[0]-self.size[0] and pg.mouse.get_pos()[0] >= 0:
             self.rect.x = pg.mouse.get_pos()[0]
+        if tick:
+            self.bloods -= random.randint(1, 5)
+        if self.bloods <= 0:
+            self.bloods = 0
+            playerG.player.empty()
+            loop = 'lose'
+        self.blood = window.showtext(LAODER.LANG['Play.playerblood']+':'+str(self.bloods), 15, culertext=1, replace='%play_name%', remove=LAODER.SETTING.dict['$play']['player'])
         self.sur.set_alpha(self.alpha)
         self.rect.w, self.rect.h = window.blit(self.sur, self.rect, (70, 70))
+        window.blit(self.blood, [WID-self.blood.get_rect().w, 0], textrcet=self.blood.get_rect(), movetext=[self.blood.get_rect().w ,0])
+        IOREDER.add('player pos', (self.rect.centerx, self.rect.centery))
 
 
-class playerbutton(pg.sprite.Sprite):
+class playerbullet(pg.sprite.Sprite):
     def __init__(self, imgcik, *groups) -> None:
         try:
             pg.sprite.Sprite.__init__(self)
+            IOREDER.IO['player bullet used'] += 1
+            IOREDER.IO['score']-=1
             self.png = LAODER.addon.playerimage[imgcik].playerimage[1]
-            self.bool = 200
+            self.blood = 200
             self.sur = pg.load(self.png)
             self.sur = self.sur
             self.rect = self.sur.get_rect()
@@ -418,9 +512,9 @@ class playerbutton(pg.sprite.Sprite):
 
     def update(self, *args, **kwargs) -> None:
         if loop != 'play':
-            playerG.button.empty()
+            playerG.bullet.empty()
         if self.rect.y <= 0:
-            playerG.button.remove(self)
+            playerG.bullet.remove(self)
         self.rect.x += self.gox
         self.rect.y += -abs(self.goy)
         self.sur.set_alpha(self.alpha)
@@ -439,36 +533,58 @@ allalpha = 255
 
 
 def gpu_loop(mouse_pos, keyboard):
-    window.blit(pg.font.Font(LAODER.FONT[0], 10).render('FPS: '+str(int(pg.Clock.get_fps())), 0, (0, 0, 0), None), [WID-pg.font.Font(LAODER.FONT[0], 10).render('FPS: '+str(int(
-        pg.Clock.get_fps())), 0, (0, 0, 0), None).get_rect().w, HEI-pg.font.Font(LAODER.FONT[0], 10).render('FPS: '+str(int(pg.Clock.get_fps())), 0, (0, 0, 0), None).get_rect().h], textrcet=pg.font.Font(LAODER.FONT[0], 10).render('FPS: '+str(int(pg.Clock.get_fps())), 0, (0, 0, 0), None).get_rect(), movetext=1)
+    IOREDER.add('haih score', window.showtext('Text.maxscore', 15, replace=[r'%username%',r'%maxscore%'], remove=[str(USER.username),str(USER.maxscore)]));\
+        IOREDER.add('FPS', pg.font.Font(LAODER.FONT[0], 10).render('FPS: '+str(int(pg.Clock.get_fps())), 0, (0, 0, 0), None));\
+    window.blit(IOREDER.IO['FPS'], [WID-IOREDER.IO['FPS'].get_rect().w, HEI-IOREDER.IO['FPS'].get_rect().h], textrcet=IOREDER.IO['FPS'].get_rect(), movetext=1)
+    window.blit(IOREDER.IO['haih score'], [5, HEI-IOREDER.IO['haih score'].get_rect().h], textrcet=IOREDER.IO['haih score'].get_rect(), movetext=1)
     if loop == 'main':
         for i in listmainloop:
             if pg.draw.rect(ROOT, (225, 255, 225), [WID/2-100, HEI/2-15, 200, 30], 1).collidepoint(mouse_pos):
                 pg.draw.rect(ROOT, (125, 255, 125), [WID/2-100, HEI/2-15, 200, 30], 5)
             else:
                 pg.draw.rect(ROOT, (225, 255, 225), [WID/2-100, HEI/2-15, 200, 30], 5)
-            window.blit(window.showtext('MainLob.button.start', 25), [
-                        WID/2-window.showtext('MainLob.button.start', 25).get_rect().w/2, HEI/2-window.showtext('MainLob.button.start', 25).get_rect().h/2])
+            window.blit(window.showtext('MainLob.button.start', 25), [WID/2-window.showtext('MainLob.button.start', 25).get_rect().w/2, HEI/2-window.showtext('MainLob.button.start', 25).get_rect().h/2],dontscale=1)
             window.blit(mainloop[i]['sur'], mainloop[i]['rect'],mainloop[i].get('size'))
     elif loop == 'play':
         bossG.boss.update()
+        bossG.bullet.update()
         playerG.player.update()
         try:
-            playerG.button.update()
+            playerG.bullet.update()
         except BaseException as er:
             print(er)
+    elif loop == 'lose':
+        IOREDER.add('losetext',window.showtext('Lose.text', 15));\
+            IOREDER.add('usedbullet',window.showtext('Text.usebullets', 15, replace=r'%bullets%',remove=IOREDER.IO['player bullet used']));\
+            IOREDER.add('scores',window.showtext('Text.score', 15, replace=r'%score%',remove=IOREDER.IO['score']));\
+        window.blit(IOREDER.IO['losetext'], [WID/2-IOREDER.IO['losetext'].get_rect().w/2, HEI/2-IOREDER.IO['losetext'].get_rect().h/2-IOREDER.IO['losetext'].get_rect().h*2])
+        window.blit(IOREDER.IO['usedbullet'], [WID/2-IOREDER.IO['usedbullet'].get_rect().w/2, HEI/2+IOREDER.IO['usedbullet'].get_rect().h/2-IOREDER.IO['losetext'].get_rect().h])
+        window.blit(IOREDER.IO['scores'], [WID/2-IOREDER.IO['scores'].get_rect().w/2, HEI/2+IOREDER.IO['scores'].get_rect().h/2])
+    elif loop == 'win':
+        IOREDER.add('wintext',window.showtext('Win.text', 15));\
+            IOREDER.add('usedbullet',window.showtext('Text.usebullets', 15, replace=r'%bullets%',remove=IOREDER.IO['player bullet used']));\
+            IOREDER.add('scores',window.showtext('Text.score', 15, replace=r'%score%',remove=IOREDER.IO['score']));\
+        window.blit(IOREDER.IO['wintext'], [WID/2-IOREDER.IO['wintext'].get_rect().w/2, HEI/2-IOREDER.IO['wintext'].get_rect().h/2-IOREDER.IO['wintext'].get_rect().h*2])
+        window.blit(IOREDER.IO['usedbullet'], [WID/2-IOREDER.IO['usedbullet'].get_rect().w/2, HEI/2+IOREDER.IO['usedbullet'].get_rect().h/2-IOREDER.IO['wintext'].get_rect().h])
+        window.blit(IOREDER.IO['scores'], [WID/2-IOREDER.IO['scores'].get_rect().w/2, HEI/2+IOREDER.IO['scores'].get_rect().h/2])
     if loop != 'play':
         window.blit(mainloop['mouse']['sur'], pg.mouse.get_pos(), [20, 20])
 
 
 def cpu_loop(mouse_pos, keyboard):
     if loop == 'play':
-        spritecollided = len(pg.sprite.spritecollide(bossG.boss, playerG.button, True))
-        if spritecollided != 0:
-            for i in range(spritecollided):
+        bosscollided = len(pg.sprite.spritecollide(bossG.boss, playerG.bullet, True))
+        if bosscollided != 0:
+            for i in range(bosscollided):
                 bossG.boss.update(tick=1)
-        if keyboard[pg.K_b]:
-            playerG.button.add(playerbutton('wheel'))
+        pg.sprite.groupcollide(bossG.bullet, playerG.bullet, True, True)
+        playercollided = len(pg.sprite.groupcollide(playerG.player, bossG.bullet, False, True))
+        if playercollided != 0:
+            for i in range(playercollided):
+                playerG.player.update(tick=1)
+        if IOREDER.IO['score']>USER.maxscore:
+            USER.maxscore=IOREDER.IO['score']
+            USER.save()
 
 
 # def touch(mouse_pos:tuple[int,int]):
@@ -481,14 +597,14 @@ def tick(mouse_pos):
     if loop == 'main':
         if pg.draw.rect(ROOT, (225, 255, 225), [WID/2-100, HEI/2, 200, 30], 1).collidepoint(mouse_pos):
             loop = 'play'
-            bossG.boss = bossself(LAODER.SETTING.dict['image']['boss'])
-            playerG.player.add(playerself(LAODER.SETTING.dict['image']['player']))
+            bossG.boss = bossself(LAODER.SETTING.dict['$play']['boss'])
+            playerG.player.add(playerself(LAODER.SETTING.dict['$play']['player']))
         else:
             for i in listmainloop:
                 if mainloop[i].get('tick') and (loop in mainloop[i].get('loop')) and mainloop[i]['rect'].collidepoint(mouse_pos):
                     changesetting()
     elif loop == 'play':
-        playerG.button.add(playerbutton(LAODER.SETTING.dict['image']['player']))
+        playerG.bullet.add(playerbullet(LAODER.SETTING.dict['$play']['player']))
 
 
 def updata(*Any):
@@ -514,23 +630,26 @@ def updata(*Any):
         if event.type == pg.KEYDOWN:
             if event.key == pg.K_ESCAPE:
                 if loop == 'play':
-                    if pg.windowAPI.mess.askyesno(LAODER.LANG['Quit.captain'], LAODER.LANG['Quit.play.quit']):
+                    if pg.windowAPI.mess.askyesno(LAODER.LANG['Quit.play.mainloop'], LAODER.LANG['Quit.play.quit']):
+                        loop = 'main'
+                elif loop == 'lose' or loop == 'win' :
+                    if pg.windowAPI.mess.askyesno(LAODER.LANG['Quit.play.mainloop'], LAODER.LANG['Quit.play.mainloop']):
                         loop = 'main'
                 elif pg.windowAPI.mess.askyesnocancel(LAODER.LANG['Quit.captain'], LAODER.LANG['Quit.quit']):
                     RUN = 0
-            if event.key == pg.K_F1:
+            if event.key == F1:
                 if Schach:
                     Schach = 0
                 else:
                     Schach = 1
-            elif event.key == pg.K_F11 and loop != 'screen':
+            elif event.key == F11 and loop != 'screen':
                 if FULLSUCSSE['full'] == 0:
                     FULLSUCSSE['full'] = 1
                     pg.display.set_mode(FULLSUCSSE['max_size'], pg.HWSURFACE | pg.FULLSCREEN)
                     WID, HEI = FULLSUCSSE['max_size']
                 else:
                     FULLSUCSSE['full'] = 0
-                    pg.display.set_mode(FULLSUCSSE['size'], pg.HWSURFACE)
+                    pg.display.set_mode(FULLSUCSSE['size'])
                     WID, HEI = FULLSUCSSE['size']
         if event.type == pg.MOUSEBUTTONDOWN:
             tick(mouse_pos)
